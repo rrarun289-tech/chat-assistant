@@ -13,7 +13,7 @@ This project is a fast, Python-first prototype for a ChatGPT-style assistant tha
 
 ```bash
 python -m pip install -r requirements.txt
-python app.py
+python -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
 Then open http://127.0.0.1:8000/ in your browser.
