@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from dotenv import load_dotenv
 from groq import Groq
 from fastapi import FastAPI, HTTPException
@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 
+# Load variables from your hidden .env file
 load_dotenv()
 
 app = FastAPI(title="ChatGPT Clone", version="1.0.0")
@@ -52,7 +53,7 @@ def sync_thread_conversation(thread_id: str, messages: List[ChatMessage], title:
     return trimmed
 
 
-def get_reply_from_groq(messages: List[ChatMessage]) -> tuple[str, str]:
+def get_reply_from_groq(messages: List[ChatMessage]) -> Tuple[str, str]:
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         fallback = (
@@ -138,3 +139,9 @@ def get_threads() -> List[Dict[str, str]]:
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+# FIXED: Added the necessary entrypoint block to fire up the server web framework
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="127.0.0.1", port=8001, reload=True)
