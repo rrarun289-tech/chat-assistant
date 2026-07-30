@@ -272,41 +272,46 @@
         messagesEl.appendChild(assistantBubble);
         messagesEl.scrollTop = messagesEl.scrollHeight;
 
-        const response = await fetch("/chat/stream", { ... });
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: thread.messages,
-            thread_id: thread.id,
-            thread_title: thread.title
-          })
-        });
+        try {
+          const response = await fetch("/chat/stream", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: thread.messages,
+              thread_id: thread.id,
+              thread_title: thread.title
+            })
+          });
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let reply = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const parts = buffer.split('\n\n');
-          buffer = parts.pop();
-          for (const part of parts) {
-            if (!part.startsWith('data:')) continue;
-            const payload = part.replace('data: ', '').trim();
-            if (payload === '{}') continue;
-            const data = JSON.parse(payload);
-            reply += data.delta;
-            assistantBubble.innerText = reply;
-            messagesEl.scrollTop = messagesEl.scrollHeight;
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let reply = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop();
+            for (const part of parts) {
+              if (!part.startsWith('data:')) continue;
+              const payload = part.replace('data: ', '').trim();
+              if (payload === '{}') continue;
+              const data = JSON.parse(payload);
+              reply += data.delta;
+              assistantBubble.innerText = reply;
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
           }
-        }
 
-        thread.messages.push({ role: 'assistant', content: reply });
-        saveThreads();
-        renderThreads();
-        renderMessages();
+          thread.messages.push({ role: 'assistant', content: reply });
+          saveThreads();
+          renderThreads();
+          renderMessages();
+        } catch (err) {
+          assistantBubble.innerText = "Error: Could not connect to backend server.";
+          console.error(err);
+        }
       }
 
       form.addEventListener('submit', async (e) => {
